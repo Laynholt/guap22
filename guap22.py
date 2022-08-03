@@ -22,7 +22,7 @@ def menu(data):
         data.to_excel(writer, sheet_name='09.04.00', index=False, encoding='utf-8-sig')
         print(f"Файл сохранен как {filename}\n")
 
-        choice = input('Нужен сортировочный вывод? (Например: вывести людей с баллами > 100) [да/нет]:\n>> ')
+        choice = input('Нужен отфильтрованный вывод? (Например: вывести людей с баллами > 100) [да/нет]:\n>> ')
         if choice.lower() == 'да':
             end = False
             data_headers = data.columns
@@ -31,10 +31,10 @@ def menu(data):
                 sheet_name = 'sorted_by'
                 sorted_by = ''
                 was_sorted = False
-                didnt_choose_anything = 'Доступные параметра сортировки закончились! :(\n'
+                didnt_choose_anything = 'Доступные параметра фильтровки закончились! :(\n'
                 clipped_data = data
 
-                choice = input('Сортировать людей по количеству общих данных? [да/нет]:\n>> ')
+                choice = input('Фильтровать людей по количеству общих данных? [да/нет]:\n>> ')
                 if choice.lower() == 'да':
                     didnt_choose_anything = ''
                     was_sorted = True
@@ -44,7 +44,7 @@ def menu(data):
                     sorted_by += f'имеют =>{number_of_points} баллов'
                     clipped_data = clipped_data[clipped_data[data_headers[4]] >= number_of_points]
 
-                choice = input('Сортировать людей по согласию на зачисление? [да/нет]:\n>> ')
+                choice = input('Фильтровать людей по согласию на зачисление? [да/нет]:\n>> ')
                 if choice.lower() == 'да':
                     didnt_choose_anything = ''
                     was_sorted = True
@@ -57,7 +57,7 @@ def menu(data):
 
                     clipped_data = clipped_data[clipped_data[data_headers[5]] == 'Да']
 
-                choice = input('Сортировать людей по оригиналам документов? [да/нет]:\n>> ')
+                choice = input('Фильтровать людей по оригиналам документов? [да/нет]:\n>> ')
                 if choice.lower() == 'да':
                     didnt_choose_anything = ''
                     was_sorted = True
@@ -73,12 +73,12 @@ def menu(data):
                 if was_sorted:
                     print(f'Людей, которые {sorted_by}: {len(clipped_data)}')
 
-                    choice = input('Записать результаты сортировки в файл? [да/нет]:\n>> ')
+                    choice = input('Записать результаты фильтровки в файл? [да/нет]:\n>> ')
                     if choice.lower() == 'да':
                         clipped_data.to_excel(writer, sheet_name=sheet_name, index=False, encoding='utf-8-sig')
                         print(f"Изменения сохранены в {filename}")
 
-                choice = input(f'{didnt_choose_anything}Попробовать отсортировать снова? [да/нет]:\n>> ')
+                choice = input(f'{didnt_choose_anything}Попробовать отфильтровать снова? [да/нет]:\n>> ')
                 if choice.lower() == 'нет':
                     end = True
 
