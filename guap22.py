@@ -9,15 +9,6 @@ def menu(data, date):
     :param data: Датафрейм pandas
     :return: None
     """
-    # choice = int(input('Сохранить данные:\n0] Не сохранять\n1] В формате csv\n2] В формате xlsx\n>> '))
-    # if choice == 1:
-    #     filename = 'guap22.csv'
-    #     data.to_csv(filename, index=False, encoding='utf-8-sig')
-    #     print(f'Файл сохранен как {filename}')
-    # elif choice == 2:
-    #     filename = 'guap22.xlsx'
-    #     data.to_excel(filename, sheet_name='09.04.00', index=False, encoding='utf-8-sig')
-    #     print(f"Файл сохранен как {filename}")
 
     filename = f'guap-{date}.xlsx'
     with pd.ExcelWriter(filename) as writer:
