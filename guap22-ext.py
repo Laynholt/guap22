@@ -163,7 +163,7 @@ class ParserGuap22:
                     didnt_choose_anything = 'Доступные параметра фильтровки закончились! :(\n'
                     clipped_data = table
 
-                    choice = input('Фильтровать людей по количеству общих данных? [да/нет]:\n>> ')
+                    choice = input('Фильтровать людей по количеству общих баллов? [да/нет]:\n>> ')
                     if choice.lower() == 'да':
                         didnt_choose_anything = ''
                         was_sorted = True
