@@ -20,6 +20,7 @@ def menu(table_data, date: str):
         if choice.lower() == 'да':
             end = False
             table_headers = table_data.columns
+            default_compare_symbol = '>='
 
             while not end:
                 sheet_name = 'Фильтр по'
@@ -27,19 +28,47 @@ def menu(table_data, date: str):
                 was_sorted = False
                 didnt_choose_anything = 'Доступные параметра фильтровки закончились! :(\n'
                 clipped_data = table_data
+                compare_symbol = default_compare_symbol
 
                 choice = input('Фильтровать людей по количеству общих баллов? [да/нет]:\n>> ')
                 if choice.lower() == 'да':
                     didnt_choose_anything = ''
                     was_sorted = True
-
+  
+                    number_of_points = 0
                     try:
-                        number_of_points = int(input('Введите от скольки баллов начинать (включительно):\n>> '))
+                        number_of_points = input('Введите от скольки баллов начинать (включительно, '
+                            'если хотите строго больше или строго равно, то напишите: = value или любой из {<, <=, =, >, >=} value):\n>> ')
+                        number_of_points = int(number_of_points)
                     except ValueError:
-                        number_of_points = 0
-                    sheet_name += f' баллам{number_of_points}'
-                    sorted_by += f'имеют =>{number_of_points} баллов'
-                    clipped_data = clipped_data[clipped_data[table_headers[4]] >= number_of_points]
+                        number_of_points = str(number_of_points)                                
+                        try:
+                            l = number_of_points.split(' ')
+                            compare_symbol = l[0]
+                            number_of_points = int(l[1])
+                        except IndexError:
+                            compare_symbol = default_compare_symbol
+                            if number_of_points.isdigit():
+                                number_of_points = int(number_of_points)
+                            else:
+                                number_of_points = 0        
+                        except ValueError:
+                            compare_symbol = default_compare_symbol
+                            number_of_points = 0
+                        
+                    sheet_name += f' балл{compare_symbol}{number_of_points}'
+                    sorted_by += f'имеют {compare_symbol}{number_of_points} баллов'
+                    
+                    if compare_symbol == '>=':
+                        clipped_data = clipped_data[clipped_data[table_headers[4]] >= number_of_points]
+                    elif compare_symbol == '=':
+                        clipped_data = clipped_data[clipped_data[table_headers[4]] == number_of_points]
+                    elif compare_symbol == '>':
+                        clipped_data = clipped_data[clipped_data[table_headers[4]] > number_of_points]
+                    elif compare_symbol == '<=':
+                        clipped_data = clipped_data[clipped_data[table_headers[4]] <= number_of_points]
+                    elif compare_symbol == '<':
+                        clipped_data = clipped_data[clipped_data[table_headers[4]] < number_of_points]
 
                 choice = input('Фильтровать людей по согласию на зачисление? [да/нет]:\n>> ')
                 if choice.lower() == 'да':

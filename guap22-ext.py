@@ -149,73 +149,105 @@ class ParserGuap22:
         :return:
         """
         filename = f'guap-{course_code}_{date}.xlsx'
-        with pd.ExcelWriter(filename) as writer:
-            table.to_excel(writer, sheet_name=course_code, index=False, encoding='utf-8-sig')
-            print(f"Файл сохранен как {filename}\n")
+        try:
+            with pd.ExcelWriter(filename) as writer:
+                table.to_excel(writer, sheet_name=course_code, index=False, encoding='utf-8-sig')
+                print(f"Файл сохранен как {filename}\n")
 
-            choice = input('Нужен отфильтрованный вывод? (Например: вывести людей с баллами > 100) [да/нет]:\n>> ')
-            if choice.lower() == 'да':
-                end = False
-                table_headers = table.columns
-                table[table_headers[4]] = pd.to_numeric(table[table_headers[4]])
+                choice = input('Нужен отфильтрованный вывод? (Например: вывести людей с баллами > 100) [да/нет]:\n>> ')
+                if choice.lower() == 'да':
+                    end = False
+                    default_compare_symbol = '>='
+                    table_headers = table.columns
+                    table[table_headers[4]] = pd.to_numeric(table[table_headers[4]])
 
-                while not end:
-                    sheet_name = 'Фильтр по'
-                    sorted_by = ''
-                    was_sorted = False
-                    didnt_choose_anything = 'Доступные параметра фильтровки закончились! :(\n'
-                    clipped_data = table
+                    while not end:
+                        sheet_name = 'Фильтр по'
+                        sorted_by = ''
+                        was_sorted = False
+                        didnt_choose_anything = 'Доступные параметра фильтровки закончились! :(\n'
+                        clipped_data = table
+                        compare_symbol = default_compare_symbol
 
-                    choice = input('Фильтровать людей по количеству общих баллов? [да/нет]:\n>> ')
-                    if choice.lower() == 'да':
-                        didnt_choose_anything = ''
-                        was_sorted = True
-
-                        try:
-                            number_of_points = int(input('Введите от скольки баллов начинать (включительно):\n>> '))
-                        except ValueError:
-                            number_of_points = 0
-                        sheet_name += f' баллам{number_of_points}'
-                        sorted_by += f'имеют =>{number_of_points} баллов'
-                        clipped_data = clipped_data[clipped_data[table_headers[4]] >= number_of_points]
-
-                    choice = input('Фильтровать людей по согласию на зачисление? [да/нет]:\n>> ')
-                    if choice.lower() == 'да':
-                        didnt_choose_anything = ''
-                        was_sorted = True
-                        sheet_name += ' согл'
-
-                        if len(sorted_by) != 0:
-                            sorted_by += ', подали согласие на зачисление'
-                        else:
-                            sorted_by += 'подали согласие на зачисление'
-
-                        clipped_data = clipped_data[clipped_data[table_headers[5]] == 'Да']
-
-                    choice = input('Фильтровать людей по оригиналам документов? [да/нет]:\n>> ')
-                    if choice.lower() == 'да':
-                        didnt_choose_anything = ''
-                        was_sorted = True
-                        sheet_name += ' докам'
-
-                        if len(sorted_by) != 0:
-                            sorted_by += ', подали оригиналы документов'
-                        else:
-                            sorted_by += 'подали оригиналы документов'
-
-                        clipped_data = clipped_data[clipped_data[table_headers[6]] == 'Да']
-
-                    if was_sorted:
-                        print(f'Людей, которые {sorted_by}: {len(clipped_data)}')
-
-                        choice = input('Записать результаты фильтровки в файл? [да/нет]:\n>> ')
+                        choice = input('Фильтровать людей по количеству общих баллов? [да/нет]:\n>> ')
                         if choice.lower() == 'да':
-                            clipped_data.to_excel(writer, sheet_name=sheet_name, index=False, encoding='utf-8-sig')
-                            print(f"Изменения сохранены в {filename}")
+                            didnt_choose_anything = ''
+                            was_sorted = True
 
-                    choice = input(f'{didnt_choose_anything}Попробовать отфильтровать снова? [да/нет]:\n>> ')
-                    if choice.lower() == 'нет':
-                        end = True
+                            number_of_points = 0
+                            try:
+                                number_of_points = input('Введите от скольки баллов начинать (включительно, '
+                                'если хотите строго больше или строго равно, то напишите: = value или любой из {<, <=, =, >, >=} value):\n>> ')
+                                number_of_points = int(number_of_points)
+                            except ValueError:
+                                number_of_points = str(number_of_points)                                
+                                try:
+                                    l = number_of_points.split(' ')
+                                    compare_symbol = l[0]
+                                    number_of_points = int(l[1])
+                                except IndexError:
+                                    compare_symbol = default_compare_symbol
+                                    if number_of_points.isdigit():
+                                        number_of_points = int(number_of_points)
+                                    else:
+                                        number_of_points = 0        
+                                except ValueError:
+                                    compare_symbol = default_compare_symbol
+                                    number_of_points = 0
+                                    
+                            sheet_name += f' балл{compare_symbol}{number_of_points}'
+                            sorted_by += f'имеют {compare_symbol}{number_of_points} баллов'
+                            
+                            if compare_symbol == '>=':
+                                clipped_data = clipped_data[clipped_data[table_headers[4]] >= number_of_points]
+                            elif compare_symbol == '=':
+                                clipped_data = clipped_data[clipped_data[table_headers[4]] == number_of_points]
+                            elif compare_symbol == '>':
+                                clipped_data = clipped_data[clipped_data[table_headers[4]] > number_of_points]
+                            elif compare_symbol == '<=':
+                                clipped_data = clipped_data[clipped_data[table_headers[4]] <= number_of_points]
+                            elif compare_symbol == '<':
+                                clipped_data = clipped_data[clipped_data[table_headers[4]] < number_of_points]
+
+                        choice = input('Фильтровать людей по согласию на зачисление? [да/нет]:\n>> ')
+                        if choice.lower() == 'да':
+                            didnt_choose_anything = ''
+                            was_sorted = True
+                            sheet_name += ' согл'
+
+                            if len(sorted_by) != 0:
+                                sorted_by += ', подали согласие на зачисление'
+                            else:
+                                sorted_by += 'подали согласие на зачисление'
+
+                            clipped_data = clipped_data[clipped_data[table_headers[5]] == 'Да']
+
+                        choice = input('Фильтровать людей по оригиналам документов? [да/нет]:\n>> ')
+                        if choice.lower() == 'да':
+                            didnt_choose_anything = ''
+                            was_sorted = True
+                            sheet_name += ' докам'
+
+                            if len(sorted_by) != 0:
+                                sorted_by += ', подали оригиналы документов'
+                            else:
+                                sorted_by += 'подали оригиналы документов'
+
+                            clipped_data = clipped_data[clipped_data[table_headers[6]] == 'Да']
+
+                        if was_sorted:
+                            print(f'Людей, которые {sorted_by}: {len(clipped_data)}')
+
+                            choice = input('Записать результаты фильтровки в файл? [да/нет]:\n>> ')
+                            if choice.lower() == 'да':
+                                clipped_data.to_excel(writer, sheet_name=sheet_name, index=False, encoding='utf-8-sig')
+                                print(f"Изменения сохранены в {filename}")
+
+                        choice = input(f'{didnt_choose_anything}Попробовать отфильтровать снова? [да/нет]:\n>> ')
+                        if choice.lower() == 'нет':
+                            end = True
+        except PermissionError:
+            print(f"Ошибка записи в файл {filename}! Пожалуйста, закройте его, если он открыт!")
 
     def start(self):
         self.courses_table, self.courses_date = self.parse_table(self.courses_url)
