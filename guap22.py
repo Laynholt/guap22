@@ -3,10 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def menu(data, date):
+def menu(data, date: str):
     """
     Функция для выбора и сортировки по пределенным параметрам
     :param data: Датафрейм pandas
+    :param date: Дата актуальности данных строка
     :return: None
     """
 
@@ -32,7 +33,10 @@ def menu(data, date):
                     didnt_choose_anything = ''
                     was_sorted = True
 
-                    number_of_points = int(input('Введите от скольки баллов начинать (включительно):\n>> '))
+                    try:
+                        number_of_points = int(input('Введите от скольки баллов начинать (включительно):\n>> '))
+                    except ValueError:
+                        number_of_points = 0
                     sheet_name += f' баллам{number_of_points}'
                     sorted_by += f'имеют =>{number_of_points} баллов'
                     clipped_data = clipped_data[clipped_data[data_headers[4]] >= number_of_points]
@@ -80,7 +84,7 @@ def get_table_data(url: str):
     """
     Функция считывает данные с сайта и возвращает датафрейм
     :param url: URL сайта
-    :return: (Pandas dataframe, date: str)
+    :return: (table_data: DataFrame, date: str)
     """
 
     page = requests.get(url)
