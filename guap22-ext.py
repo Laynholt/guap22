@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import os
-
+import platform
 
 class ParserGuap22:
     def __init__(self, base_url, url_postfix):
@@ -128,7 +128,10 @@ class ParserGuap22:
 
             choice = input('Попробовать ещё раз с другими направлениями? [да/нет]:\n>> ')
             if choice.lower() == 'да':
-                os.system('clear')
+                if platform.system() == 'Windows':
+                    os.system('cls')
+                elif platform.system() == 'Linux':
+                    os.system('clear')
                 print('Выберете интересующее направление:')
                 count = 0
                 for i, row_data in clipped_courses_table.iterrows():
