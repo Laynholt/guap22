@@ -3,30 +3,30 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def menu(data, date: str):
+def menu(table_data, date: str):
     """
     Функция для выбора и сортировки по пределенным параметрам
-    :param data: Датафрейм pandas
+    :param table_data: Датафрейм pandas
     :param date: Дата актуальности данных строка
     :return: None
     """
 
     filename = f'guap-{date}.xlsx'
     with pd.ExcelWriter(filename) as writer:
-        data.to_excel(writer, sheet_name='09.04.00', index=False, encoding='utf-8-sig')
+        table_data.to_excel(writer, sheet_name='09.04.00', index=False, encoding='utf-8-sig')
         print(f"Файл сохранен как {filename}\n")
 
         choice = input('Нужен отфильтрованный вывод? (Например: вывести людей с баллами > 100) [да/нет]:\n>> ')
         if choice.lower() == 'да':
             end = False
-            data_headers = data.columns
+            table_headers = table_data.columns
 
             while not end:
                 sheet_name = 'Фильтр по'
                 sorted_by = ''
                 was_sorted = False
                 didnt_choose_anything = 'Доступные параметра фильтровки закончились! :(\n'
-                clipped_data = data
+                clipped_data = table_data
 
                 choice = input('Фильтровать людей по количеству общих данных? [да/нет]:\n>> ')
                 if choice.lower() == 'да':
@@ -39,7 +39,7 @@ def menu(data, date: str):
                         number_of_points = 0
                     sheet_name += f' баллам{number_of_points}'
                     sorted_by += f'имеют =>{number_of_points} баллов'
-                    clipped_data = clipped_data[clipped_data[data_headers[4]] >= number_of_points]
+                    clipped_data = clipped_data[clipped_data[table_headers[4]] >= number_of_points]
 
                 choice = input('Фильтровать людей по согласию на зачисление? [да/нет]:\n>> ')
                 if choice.lower() == 'да':
@@ -52,7 +52,7 @@ def menu(data, date: str):
                     else:
                         sorted_by += 'подали согласие на зачисление'
 
-                    clipped_data = clipped_data[clipped_data[data_headers[5]] == 'Да']
+                    clipped_data = clipped_data[clipped_data[table_headers[5]] == 'Да']
 
                 choice = input('Фильтровать людей по оригиналам документов? [да/нет]:\n>> ')
                 if choice.lower() == 'да':
@@ -65,7 +65,7 @@ def menu(data, date: str):
                     else:
                         sorted_by += 'подали оригиналы документов'
 
-                    clipped_data = clipped_data[clipped_data[data_headers[6]] == 'Да']
+                    clipped_data = clipped_data[clipped_data[table_headers[6]] == 'Да']
 
                 if was_sorted:
                     print(f'Людей, которые {sorted_by}: {len(clipped_data)}')
@@ -92,9 +92,8 @@ def get_table_data(url: str):
 
     table = soup.find_all('table')
     table_data = pd.read_html(str(table))[0]
-    data_headers = table_data.columns
-    col_edited = data_headers[1]
-    table_data[col_edited].fillna('Нет', inplace=True)
+    table_headers = table_data.columns
+    table_data[table_headers[1]].fillna('Нет', inplace=True)
 
     date = ''
     for category in soup('b', text=lambda text: text and text == 'Дата актуализации - '):

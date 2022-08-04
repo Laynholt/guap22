@@ -1,12 +1,18 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+import os
 
 
 class ParserGuap22:
-    def __init__(self, start_url, url_postfix):
-        self.template_url = start_url
-        self.courses_url = start_url + url_postfix
+    def __init__(self, base_url, url_postfix):
+        """
+        Конструктор класса
+        :param base_url: общий url без постфиксов (к нему будут они добавляться для перехода на другие страницы)
+        :param url_postfix: постфикс страницы направлений
+        """
+        self.base_url = base_url
+        self.courses_url = base_url + url_postfix
         self.courses_table = None
         self.courses_date = None
 
@@ -19,7 +25,7 @@ class ParserGuap22:
         page = requests.get(url)
         soup = BeautifulSoup(page.text, 'lxml')
 
-        # table = soup.find('table', id='tablestat')
+        # Парсим всю таблицу, поочередно проходясь по строкам, копируя полное содержание элементов всемте с ссылками
         table = soup.findAll('table')
         trs = table[0].findAll("tr")
 
@@ -52,14 +58,16 @@ class ParserGuap22:
                     ret = td.text if td.text != '' and td.text != '\n' else "NaN"
                 tds.append(ret)
             rows.append(tds)
-
+        # Преобразуем полученные данные в датафрейм
         table_data = pd.DataFrame(rows, columns=headers)
 
+        # Ищем в html коде внутри тегов текст с данными актуальности даты
         date = ''
         for category in soup('b', text=lambda text: text and text == 'Дата актуализации - '):
             date = category.next_sibling.strip('" \n')
         print(f'Данные актуальны на {date}')
 
+        # Ищем внутри тегов h3 и h4, которые идут подряд, название специальности и количество мест
         h3s = soup.findAll('h3')
         h4s = soup.findAll('h4')
         if len(h3s):
@@ -82,6 +90,7 @@ class ParserGuap22:
         print('Выберете интересующее направление:')
         clipped_courses_table = pd.DataFrame(columns=table_headers)
         count = 0
+        # Проходимся по-строчно по датафрейму и добавляем поля, которые имеют ссылки внутри, в новый датафрейм
         for i, row_data in self.courses_table.iterrows():
             if (row_data[table_headers[2]] != '-' and row_data[table_headers[2]] != '0') \
                     or (row_data[table_headers[3]] != '-' and row_data[table_headers[3]] != '0') \
@@ -103,7 +112,7 @@ class ParserGuap22:
                         choice = int(input(f'Выберете нужный список:\n'
                                            f'1] {table_headers[2]}\n2] {table_headers[3]}\n3] {table_headers[4]}\n>> '))
                     except ValueError:
-                        choice = 0
+                        choice = 1
                     if choice < 1 or choice > 3:
                         choice = 1
 
@@ -112,13 +121,14 @@ class ParserGuap22:
                         print('Текущего списка не существует!')
                     else:
                         url_postfix = url_postfix.split(')(')[1].replace(')', '').replace(' ', '')
-                        course_table, course_date = self.parse_table(self.template_url + url_postfix)
+                        course_table, course_date = self.parse_table(self.base_url + url_postfix)
                         self.current_course_menu(course_table, str(course_date).replace(':', '-'),
                                                  str(row_data[table_headers[0]]))
                     break
 
             choice = input('Попробовать ещё раз с другими направлениями? [да/нет]:\n>> ')
             if choice.lower() == 'да':
+                os.system('clear')
                 print('Выберете интересующее направление:')
                 count = 0
                 for i, row_data in clipped_courses_table.iterrows():
@@ -129,8 +139,11 @@ class ParserGuap22:
 
     def current_course_menu(self, table, date, course_code):
         """
-        Метод обработки дейтсвий пользователя на странице нужного курса
-        :return: None
+        Метод обработки действий пользователя на странице нужного курса
+        :param table: датафрейм нужной таблицы текущего направления
+        :param date: строка актуальности спаршенных данных
+        :param course_code: код направления
+        :return:
         """
         filename = f'guap-{course_code}_{date}.xlsx'
         with pd.ExcelWriter(filename) as writer:
