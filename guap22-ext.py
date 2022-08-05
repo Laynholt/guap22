@@ -176,8 +176,9 @@ class ParserGuap22:
 
                             number_of_points = 0
                             try:
-                                number_of_points = input('Введите от скольки баллов начинать (включительно, '
-                                'если хотите строго больше или строго равно, то напишите: = value или любой из {<, <=, =, >, >=} value):\n>> ')
+                                number_of_points = input('Введите от скольки баллов начинать\n[Пример: ">> 100" кавычки и >> писать не нужно!]'
+                            '\n(По стандарту фильтрация будет >= value, '
+                            'если хотите строго больше или другой знак неравества, то напишите: "= value" или любой из "{<, <=, =, >, >=} value"):\n>> ')
                                 number_of_points = int(number_of_points)
                             except ValueError:
                                 number_of_points = str(number_of_points)                                
