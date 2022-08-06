@@ -11,7 +11,7 @@ class AppParser:
     def __init__(self, base_url, url_postfix):
         # ui variables
         self.window = tkinter.Tk()
-        self.window.geometry('560x100')
+        self.window.geometry('560x120')
         try:
             self.window.iconbitmap('icon.ico')
         except tkinter.TclError:
@@ -35,7 +35,7 @@ class AppParser:
         self.current_subcourse_type = None
 
         self.button_load_courses = tkinter.Button(self.window, text='Загрузить направление', command=self._load_course)
-        self.button_load_courses.grid(column=1, row=1)
+        self.button_load_courses.grid(column=1, row=1, pady=5)
 
         self.check_state_points = tkinter.BooleanVar()
         self.check_state_accept = tkinter.BooleanVar()
@@ -55,19 +55,19 @@ class AppParser:
 
         self.combo_points_sign_variable = tkinter.StringVar()
         self.combo_points_sign = Combobox(self.window, width=5, textvariable=self.combo_points_sign_variable)
-        self.combo_points_sign.grid(column=0, row=3, sticky=tkinter.W)
+        self.combo_points_sign.grid(column=0, row=3, sticky=tkinter.W, padx=5, pady=5)
         self.combo_points_sign['values'] = ('>=', '>', '=', '<=', '<')
         self.combo_points_sign['state'] = 'readonly'
         self.combo_points_sign.current(0)
 
         self.label_points = tkinter.Label(self.window, text='Введите баллы:')
-        self.label_points.grid(column=0, row=3, sticky=tkinter.E)
+        self.label_points.grid(column=0, row=3, sticky=tkinter.E, pady=5)
 
         self.entry_points_value = tkinter.Entry(self.window)
-        self.entry_points_value.grid(column=1, row=3, sticky=tkinter.W)
+        self.entry_points_value.grid(column=1, row=3, sticky=tkinter.W, pady=5)
 
         self.button_filter = tkinter.Button(self.window, text='Отфильтровать', command=self._filtrate)
-        self.button_filter.grid(column=2, row=3)
+        self.button_filter.grid(column=2, row=3, pady=5)
 
         # parser variables
         self.base_url = base_url
