@@ -25,10 +25,14 @@ class AppParser:
         self.combo_courses = Combobox(self.window, width=33)
         self.combo_courses.grid(column=1, row=0)
         self.combo_courses['state'] = 'readonly'
+        self.combo_courses_loaded_row = None
 
         self.combo_subcourses = Combobox(self.window)
         self.combo_subcourses.grid(column=2, row=0)
         self.combo_subcourses['state'] = 'readonly'
+        self.combo_subcourses_loaded_row = None
+        
+        self.current_subcourse_type = None
 
         self.button_load_courses = tkinter.Button(self.window, text='Загрузить направление', command=self._load_course)
         self.button_load_courses.grid(column=1, row=1)
@@ -92,35 +96,44 @@ class AppParser:
                     self.current_course_table, self.current_course_date = self._parse_table(self.base_url + url_postfix)
                     self.current_course_date = str(self.current_course_date).replace(':', '-')
                     self.current_course_code = str(row_data[table_headers[0]])
+                    self.current_subcourse_type = str(table_headers[current_subcourse + 2]).replace(' ', '_')
+                    
+                    self.combo_courses_loaded_row = current_course
+                    self.combo_subcourses_loaded_row = current_subcourse
 
-                    filename = f'guap-{self.current_course_code}_{self.current_course_date}.xlsx'
+                    filename = f'guap-{self.current_course_code}_{self.current_course_date}_{self.current_subcourse_type}.xlsx'
                     try:
                         with pd.ExcelWriter(filename) as writer:
                             self.current_course_table.to_excel(writer, sheet_name=self.current_course_code,
                                                                index=False, encoding='utf-8-sig')
 
-                        messagebox.showinfo('Выполнено', f'Направление [{row_data[table_headers[0]]} - '
-                                                         f'{row_data[table_headers[1]]}] успешно загружено и записано '
-                                                         f'в файл [{filename}]!')
+                        messagebox.showinfo('Выполнено', f'Направление:\n[{row_data[table_headers[0]]} - '
+                                                         f'{row_data[table_headers[1]]}]\n\nУспешно загружено и записано'
+                                                         f' в файл [{filename}]!')
                     except PermissionError:
                         messagebox.showerror('Ошибка', f'Не удалось записать данные в файл [{filename}],'
                                                        f' вероятно из-за того, что он открыт!')
 
     def _filtrate(self):
-        self._load_course()
-
         if self.current_course_table is None or self.current_course_date is None or self.current_course_code is None:
             messagebox.showwarning('Предупреждение', 'Сначала выберете и загрузите нужное направление!')
             return
         else:
-            filename = f'guap-{self.current_course_code}_{self.current_course_date}.xlsx'
+            if self.combo_courses_loaded_row != self.combo_courses.current() \
+                    or self.combo_subcourses_loaded_row != self.combo_subcourses.current():
+                    self._load_course()
+                    if self.combo_courses_loaded_row != self.combo_courses.current() \
+                            or self.combo_subcourses_loaded_row != self.combo_subcourses.current():
+                            return
+        
+            filename = f'guap-{self.current_course_code}_{self.current_course_date}_{self.current_subcourse_type}.xlsx'
             if not os.path.exists(filename):
                 with pd.ExcelWriter(filename) as writer:
                     self.current_course_table.to_excel(writer, sheet_name=self.current_course_code,
                                                        index=False, encoding='utf-8-sig')
 
             try:
-                with pd.ExcelWriter(filename, mode='a', engine='openpyxl') as writer:
+                with pd.ExcelWriter(filename, mode='a', engine='openpyxl', if_sheet_exists='replace') as writer:
                     table_headers = self.current_course_table.columns
                     self.current_course_table[table_headers[4]] = pd.to_numeric(
                         self.current_course_table[table_headers[4]])
@@ -161,7 +174,7 @@ class AppParser:
 
                         clipped_data = clipped_data[clipped_data[table_headers[5]] == 'Да']
 
-                    if self.check_state_points.get():
+                    if self.check_state_document.get():
                         sheet_name += ' докам'
 
                         if len(sorted_by) != 0:
@@ -171,8 +184,12 @@ class AppParser:
 
                         clipped_data = clipped_data[clipped_data[table_headers[6]] == 'Да']
 
+                    if len(sorted_by) == 0:
+                        sorted_by = 'поставили данное направление'
                     clipped_data.to_excel(writer, sheet_name=sheet_name, index=False, encoding='utf-8-sig')
-                    messagebox.showinfo('Выполнено', f'Людей, которые {sorted_by}: [{len(clipped_data)}].\n\n'
+                    messagebox.showinfo('Выполнено', f'Дата актуальности данных: {self.current_course_date.replace("-", ":")}\n\n'
+                                                     f'Направление:\n{self.h3}\nКоличество мест:\n{self.h4}\n\n'
+                                                     f''f'Людей, которые {sorted_by}: [{len(clipped_data)}].\n\n'
                                                      f'Отфильтрованные данные записаны в файл [{filename}] '
                                                      f'в лист с именем [{sheet_name}]')
 
