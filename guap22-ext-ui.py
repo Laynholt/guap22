@@ -12,7 +12,7 @@ class AppParser:
         # ui variables
         self.window = tkinter.Tk()
         self.window.geometry('560x100')
-                try:
+        try:
             self.window.iconbitmap('icon.ico')
         except tkinter.TclError:
             pass
