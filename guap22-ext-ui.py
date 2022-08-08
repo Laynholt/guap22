@@ -27,58 +27,66 @@ class Parser:
         :param url: Страницы
         :return: (DataFrame, str)
         """
-        page = requests.get(url)
-        soup = BeautifulSoup(page.text, 'lxml')
+        table_data = None
+        date = None
+        
+        try:
+            page = requests.get(url)
+            soup = BeautifulSoup(page.text, 'lxml')
 
-        # Парсим всю таблицу, поочередно проходясь по строкам, копируя полное содержание элементов всемте с ссылками
-        table = soup.findAll('table')
-        trs = table[0].findAll("tr")
+            # Парсим всю таблицу, поочередно проходясь по строкам, копируя полное содержание элементов всемте с ссылками
+            table = soup.findAll('table')
+            trs = table[0].findAll("tr")
 
-        headers = []
-        for th in trs[0].findAll("th"):
-            headers.append(th.text)
-        rows = []
-        for i in range(1, len(trs)):
-            tds = []
-            for td in trs[i].findAll("td"):
-                a = td.findAll("a")
-                spans = td.findAll("span")
-                inputs = td.findAll("input")
-                ret = ""
-                if len(a) != 0 or len(spans) != 0 or len(inputs) != 0:
-                    if len(a) != 0:
-                        for link in a:
-                            ret += link.text + '(' + link['href'] + ') '
-                    if len(spans) != 0:
-                        for span in spans:
-                            if span.has_attr('title'):
-                                ret += span.text + '(' + span['title'] + ') '
-                    if len(inputs) != 0:
-                        for inp in inputs:
-                            if inp.has_attr('value'):
-                                if inp.has_attr('type'):
-                                    if inp['type'] == "hidden":
-                                        ret += inp['value']
-                else:
-                    ret = td.text if td.text != '' and td.text != '\n' else "NaN"
-                tds.append(ret)
-            rows.append(tds)
-        # Преобразуем полученные данные в датафрейм
-        table_data = pd.DataFrame(rows, columns=headers)
+            headers = []
+            for th in trs[0].findAll("th"):
+                headers.append(th.text)
+            rows = []
+            for i in range(1, len(trs)):
+                tds = []
+                for td in trs[i].findAll("td"):
+                    a = td.findAll("a")
+                    spans = td.findAll("span")
+                    inputs = td.findAll("input")
+                    ret = ""
+                    if len(a) != 0 or len(spans) != 0 or len(inputs) != 0:
+                        if len(a) != 0:
+                            for link in a:
+                                ret += link.text + '(' + link['href'] + ') '
+                        if len(spans) != 0:
+                            for span in spans:
+                                if span.has_attr('title'):
+                                    ret += span.text + '(' + span['title'] + ') '
+                        if len(inputs) != 0:
+                            for inp in inputs:
+                                if inp.has_attr('value'):
+                                    if inp.has_attr('type'):
+                                        if inp['type'] == "hidden":
+                                            ret += inp['value']
+                    else:
+                        ret = td.text if td.text != '' and td.text != '\n' else "NaN"
+                    tds.append(ret)
+                rows.append(tds)
+            # Преобразуем полученные данные в датафрейм
+            table_data = pd.DataFrame(rows, columns=headers)
 
-        # Ищем в html коде внутри тегов текст с данными актуальности даты
-        date = ''
-        for category in soup('b', text=lambda text: text and text == 'Дата актуализации - '):
-            date = category.next_sibling.strip('" \n')
+            # Ищем в html коде внутри тегов текст с данными актуальности даты
+            date = ''
+            for category in soup('b', text=lambda text: text and text == 'Дата актуализации - '):
+                date = category.next_sibling.strip('" \n')
 
-        # Ищем внутри тегов h3 и h4, которые идут подряд, название специальности и количество мест
-        self.h3 = soup.findAll('h3')
-        self.h4 = soup.findAll('h4')
-        if len(self.h3):
-            self.h3 = str(self.h3[0]).replace('<h3>', '').replace('</h3>', '')
-            if len(self.h4):
-                self.h4 = str(self.h4[0]).replace('<h4>', '').replace('</h4>', '').replace('<br>', '').replace('<br/>',
-                                                                                                               '')
+            # Ищем внутри тегов h3 и h4, которые идут подряд, название специальности и количество мест
+            self.h3 = soup.findAll('h3')
+            self.h4 = soup.findAll('h4')
+            if len(self.h3):
+                self.h3 = str(self.h3[0]).replace('<h3>', '').replace('</h3>', '')
+                if len(self.h4):
+                    self.h4 = str(self.h4[0]).replace('<h4>', '').replace('</h4>', '').replace('<br>', '').replace('<br/>',
+                                                                                                                   '')
+        except requests.exceptions.ConnectionError:
+            messagebox.showerror('Ошибка', f'Не удалось подключиться к [{url}]!\n\n'
+                                           f'Проверьте соединение с Интернетом и повторите попытку.')
+            quit()
         return table_data, date
 
 
